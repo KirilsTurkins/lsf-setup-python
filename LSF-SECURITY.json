@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "lsf.github-action.security-fork.v1",
+  "upstreamRepository": "actions/setup-python",
+  "upstreamRevision": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+  "upstreamTag": "v7.1.0",
+  "runtime": "node24",
+  "nodeBuild": "24.19.0",
+  "dependencyOverrides": {
+    "undici@6": "6.29.1"
+  },
+  "productionPackages": 46,
+  "osvFindingCount": 0,
+  "validation": {
+    "name": "setup-python",
+    "node": "v24.19.0",
+    "calls": [
+      {
+        "stage": "lock",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "install",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "build",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "test",
+        "status": 0,
+        "signal": null
+      }
+    ],
+    "status": 0
+  },
+  "upstreamTests": [
+    "Test Suites: 11 passed, 11 total",
+    "Tests:       249 passed, 249 total",
+    "Snapshots:   0 total",
+    "Time:        26.656 s"
+  ],
+  "bundles": {
+    "dist/cache-save/index.js": {
+      "bytes": 3581478,
+      "sha256": "96106700cdb990fd1807b236b4e910a70a8176e0960741149d889c3db8d4c87a"
+    },
+    "dist/cache-save/package.json": {
+      "bytes": 23,
+      "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a"
+    },
+    "dist/setup/index.js": {
+      "bytes": 3675660,
+      "sha256": "025683e0948dc4d68339b20854db5ca617b01a90f97e80afb396a3627a56dcdf"
+    },
+    "dist/setup/package.json": {
+      "bytes": 23,
+      "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a"
+    }
+  }
+}
