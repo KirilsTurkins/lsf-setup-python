@@ -1,0 +1,67 @@
+name: LSF setup-python matcher source owner
+on:
+  push:
+    branches:
+      - diag/20261105-setup-python-runtime
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: KirilsTurkins/lsf-checkout@4d310727149d3abacc52b5dcb0a1c4d18b345d13
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify candidate source and diagnostic-only overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = cc883652b3ad6f47c0fe0139ef4b0981f50ad59d
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/lsf-setup-python-runtime-owner.yml
+          git rev-parse HEAD HEAD^ HEAD^{tree} HEAD^^{tree}
+      - uses: KirilsTurkins/lsf-setup-node@fdae00b14e855eb751452bc70c64dde286270415
+        with:
+          node-version: 24.19.0
+      - name: Install the locked graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = v24.19.0
+          test "$(npm --version)" = 11.17.0
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ls --all > /tmp/lsf-setup-python-npm-ls.txt
+      - name: Verify installed sources and rebuilt runtime bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lsf-setup-python-runtime-evidence
+          node .lsf-source/verify-installed-minimatch.mjs | tee /tmp/lsf-setup-python-runtime-evidence/installed-minimatch.json
+          npm run build
+          git diff --exit-code -- dist/setup/index.js dist/cache-save/index.js
+      - name: Run existing tests and source refusal controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test -- --silent
+          npm run test:security-source
+      - name: Retain exact build inputs and outputs
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lsf-setup-python-runtime-evidence
+          for file in package.json package-lock.json dist/setup/index.js dist/cache-save/index.js .lsf-source/minimatch-10.2.5.original.tgz .lsf-source/minimatch-10.2.5-lsf-bound-v1.tar .lsf-source/minimatch-10.2.5-lsf-bound-v1.repair.json .lsf-source/verify-installed-minimatch.mjs .lsf-source/minimatch-bounds.test.mjs; do
+            if test -f "$file"; then mkdir -p "/tmp/lsf-setup-python-runtime-evidence/$(dirname "$file")"; cp "$file" "/tmp/lsf-setup-python-runtime-evidence/$file"; fi
+          done
+          (cd /tmp/lsf-setup-python-runtime-evidence && find . -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/lsf-setup-python-runtime-sha256.txt)
+          cp /tmp/lsf-setup-python-runtime-sha256.txt /tmp/lsf-setup-python-runtime-evidence/SHA256SUMS
+      - uses: KirilsTurkins/lsf-upload-artifact@5c42799caf30eda69cb2db5da0be2400c47cef16
+        if: always()
+        with:
+          name: lsf-setup-python-runtime-source-evidence
+          path: /tmp/lsf-setup-python-runtime-evidence
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
