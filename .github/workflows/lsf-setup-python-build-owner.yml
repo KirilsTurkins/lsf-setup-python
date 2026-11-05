@@ -1,0 +1,43 @@
+name: LSF setup-python dependency build owner
+on:
+  push:
+    branches:
+      - diag/20261105-setup-python-build
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: KirilsTurkins/lsf-checkout@4d310727149d3abacc52b5dcb0a1c4d18b345d13
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify the exact candidate and diagnostic-only overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = c5edb9468e068e1f395c5955d9a342cf057ddded
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/lsf-setup-python-build-owner.yml
+          git rev-parse HEAD HEAD^ HEAD^{tree} HEAD^^{tree}
+      - uses: KirilsTurkins/lsf-setup-node@fdae00b14e855eb751452bc70c64dde286270415
+        with:
+          node-version: 24.19.0
+      - name: Install the exact locked dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --version
+          npm --version
+          test "$(npm --version)" = 11.17.0
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ls --all > /tmp/lsf-setup-python-npm-ls.txt
+      - name: Verify the repaired source and rebuild the actual bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          git diff --exit-code -- dist/setup/index.js dist/cache-save/index.js
+      - name: Run the upstream test suite
+        run: npm test -- --silent
